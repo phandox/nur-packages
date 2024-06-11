@@ -55,6 +55,7 @@ phpPackage.buildComposerProject (finalAttrs: {
     description = "The Firefly III Data Importer can import data into Firefly III ";
     homepage = "https://github.com/firefly-iii/data-importer";
     license = lib.licenses.agpl3Only;
-    maintainers = [ lib.maintainers.phandox ];
+    # not yet in nixpkgs maintainers
+    #maintainers = [ lib.maintainers.phandox ];
   };
 })
