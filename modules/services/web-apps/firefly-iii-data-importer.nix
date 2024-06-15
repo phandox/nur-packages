@@ -15,22 +15,6 @@ let
   defaultUser = "firefly-iii-data-importer";
   defaultGroup = "firefly-iii-data-importer";
 
-  artisan = "${cfg.package}/artisan";
-
-  env-file-values = mapAttrs' (n: v: nameValuePair (removeSuffix "_FILE" n) v)
-    (filterAttrs (n: v: hasSuffix "_FILE" n) cfg.settings);
-  env-nonfile-values = filterAttrs (n: v: ! hasSuffix "_FILE" n) cfg.settings;
-
-    # TODO create EnvironmentFile for phpfpm service with this function
-  fileenv-func = ''
-    ${toShellVars env-nonfile-values}
-    ${concatLines (mapAttrsToList (n: v: "${n}=\"$(< ${v})\"") env-file-values)}
-  '';
-
-  data-importer-envfile = pkgs.writeText "data-importer.env" ''
-    ${fileenv-func}
-  '';
-
   commonServiceConfig = {
     Type = "oneshot";
     User = user;
@@ -101,7 +85,7 @@ in {
 
     package = mkOption {
       type = package;
-      default = dataImporterPackage;
+      default = pkgs.nur.repos.phandox.firefly-iii-data-importer;
       defaultText = literalExpression "nur.repos.phandox.firefly-iii-data-importer";
       description = ''
         The firefly-iii-data-importer package served by php-fpm and the webserver of choice.
@@ -266,40 +250,6 @@ in {
         "clear_env" = "no";
       } // cfg.poolConfig;
     };
-
-#    systemd.services.firefly-iii-data-importer-setup = {
-#      after = [ "postgresql.service" "mysql.service" ];
-#      requiredBy = [ "phpfpm-firefly-iii-data-importer.service" ];
-#      before = [ "phpfpm-firefly-iii-data-importer.service" ];
-#      serviceConfig = {
-#        ExecStart = firefly-iii-data-importer-maintenance;
-#        RuntimeDirectory = "phpfpm";
-#        RuntimeDirectoryPreserve = true;
-#        RemainAfterExit = true;
-#      } // commonServiceConfig;
-#      unitConfig.JoinsNamespaceOf = "phpfpm-firefly-iii-data-importer.service";
-#      restartTriggers = [ cfg.package ];
-#    };
-
-#    systemd.services.firefly-iii-data-importer-cron = {
-#      after = [ "firefly-iii-data-importer-setup.service" "postgresql.service" "mysql.service" ];
-#      wants = [ "firefly-iii-data-importer-setup.service" ];
-#      description = "Daily Firefly III cron job";
-#      serviceConfig = {
-#        ExecStart = "${artisan} firefly-iii-data-importer:cron";
-#      } // commonServiceConfig;
-#    };
-#
-#    systemd.timers.firefly-iii-data-importer-cron = {
-#      description = "Trigger Firefly Cron";
-#      timerConfig = {
-#        OnCalendar = "Daily";
-#        RandomizedDelaySec = "1800s";
-#        Persistent = true;
-#      };
-#      wantedBy = [ "timers.target" ];
-#      restartTriggers = [ cfg.package ];
-#    };
 
     services.nginx = mkIf cfg.enableNginx {
       enable = true;
